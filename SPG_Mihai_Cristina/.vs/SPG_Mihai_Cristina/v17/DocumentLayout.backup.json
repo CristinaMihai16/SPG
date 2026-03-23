@@ -1,0 +1,45 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\user\\OneDrive\\Desktop\\SPG_Mihai_Cristina\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{08DB6AD0-7F47-4712-A7E3-65AA2E8408A3}|SPG_Mihai_Cristina\\SPG_Mihai_Cristina.vcxproj|C:\\Users\\user\\OneDrive\\Desktop\\SPG_Mihai_Cristina\\SPG_Mihai_Cristina\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{08DB6AD0-7F47-4712-A7E3-65AA2E8408A3}|SPG_Mihai_Cristina\\SPG_Mihai_Cristina.vcxproj|solutionrelative:SPG_Mihai_Cristina\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 1,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedHeight": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "main.cpp",
+              "DocumentMoniker": "C:\\Users\\user\\OneDrive\\Desktop\\SPG_Mihai_Cristina\\SPG_Mihai_Cristina\\main.cpp",
+              "RelativeDocumentMoniker": "SPG_Mihai_Cristina\\main.cpp",
+              "ToolTip": "C:\\Users\\user\\OneDrive\\Desktop\\SPG_Mihai_Cristina\\SPG_Mihai_Cristina\\main.cpp",
+              "RelativeToolTip": "SPG_Mihai_Cristina\\main.cpp",
+              "ViewState": "AgIAAP0BAAAAAAAAAAAAANIBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-03-10T13:16:39.262Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
