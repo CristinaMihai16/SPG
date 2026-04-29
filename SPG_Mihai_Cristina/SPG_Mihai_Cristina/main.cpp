@@ -1038,6 +1038,238 @@ void UpdatePlayerCar() {
     if (carZ < -250) { carZ = -250; carSpeed = 0; }
 }
 
+// ===================== PASARI =====================
+struct Bird {
+    float x, y, z;          
+    float dirX, dirZ;        
+    float speed;             
+    float wingAngle;        
+    float wingSpeed;        
+    float targetY;           
+    float changeTimer;       
+    float changeCooldown;    
+    float yaw;               
+};
+
+std::vector<Bird> birds;    
+
+static void RandomDir(float& dx, float& dz) {
+    float angle = ((float)rand() / RAND_MAX) * 2.0f * 3.14159f;
+    dx = cosf(angle);
+    dz = sinf(angle);
+}
+
+
+void BuildBirds() {                                        
+    birds.clear();
+    srand(42); 
+    for (int i = 0; i < 5; i++) {
+        Bird b;
+        b.x = ((float)rand() / RAND_MAX) * 160.0f - 80.0f;
+        b.z = ((float)rand() / RAND_MAX) * 160.0f - 80.0f;
+        b.y = 30.0f + ((float)rand() / RAND_MAX) * 25.0f; 
+        b.targetY = b.y;
+        RandomDir(b.dirX, b.dirZ);
+        b.speed = 0.12f + ((float)rand() / RAND_MAX) * 0.10f; 
+        b.wingAngle = ((float)rand() / RAND_MAX) * 3.14159f;       
+        b.wingSpeed = 2.5f + ((float)rand() / RAND_MAX) * 2.0f;  
+        b.changeCooldown = 2.5f + ((float)rand() / RAND_MAX) * 3.5f;
+        b.changeTimer = b.changeCooldown;
+        b.yaw = atan2f(b.dirX, b.dirZ) * 180.0f / 3.14159f;
+        birds.push_back(b);
+    }
+}
+
+void UpdateBirds(float dt) {                               
+    for (auto& b : birds) {
+        b.wingAngle += b.wingSpeed * dt;
+
+        b.changeTimer -= dt;
+        if (b.changeTimer <= 0.0f) {
+            RandomDir(b.dirX, b.dirZ);
+            b.yaw = atan2f(b.dirX, b.dirZ) * 180.0f / 3.14159f;
+            b.targetY = 28.0f + ((float)rand() / RAND_MAX) * 30.0f;
+            b.changeTimer = b.changeCooldown;
+        }
+
+        b.x += b.dirX * b.speed;
+        b.z += b.dirZ * b.speed;
+
+        b.y += (b.targetY - b.y) * 0.008f;
+
+        const float limit = 180.0f;
+        if (b.x > limit || b.x < -limit || b.z > limit || b.z < -limit) {
+            float toCX = -b.x, toCZ = -b.z;
+            float len = sqrtf(toCX * toCX + toCZ * toCZ);
+            if (len > 0.001f) { b.dirX = toCX / len; b.dirZ = toCZ / len; }
+            b.yaw = atan2f(b.dirX, b.dirZ) * 180.0f / 3.14159f;
+            b.changeTimer = b.changeCooldown;
+        }
+    }
+}
+
+void DrawOneBird(const Bird& b) {                        
+    glPushMatrix();
+    glTranslatef(b.x, b.y, b.z);
+    glRotatef(b.yaw, 0, 1, 0); 
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_LIGHTING); 
+    glColor3f(0.15f, 0.12f, 0.10f); 
+    glPushMatrix();
+    glScalef(0.28f, 0.22f, 0.55f);
+    glutSolidSphere(1.0f, 10, 8);
+    glPopMatrix();
+    glColor3f(0.18f, 0.14f, 0.11f);
+    glPushMatrix();
+    glTranslatef(0.0f, 0.08f, 0.52f);
+    glutSolidSphere(0.18f, 8, 6);
+    glPopMatrix();
+
+
+    float flapAngle = sinf(b.wingAngle) * 35.0f; 
+
+    glColor3f(0.20f, 0.16f, 0.13f);
+    glPushMatrix();
+    glTranslatef(0.28f, 0.0f, 0.0f);
+    glRotatef(-flapAngle, 0.0f, 0.0f, 1.0f); 
+    glBegin(GL_TRIANGLES);
+    glVertex3f(0.0f, 0.0f, 0.15f);  
+    glVertex3f(0.0f, 0.0f, -0.25f);  
+    glVertex3f(1.10f, 0.0f, -0.05f);  
+    glEnd();
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(-0.28f, 0.0f, 0.0f);
+    glRotatef(flapAngle, 0.0f, 0.0f, 1.0f);
+    glBegin(GL_TRIANGLES);
+    glVertex3f(0.0f, 0.0f, 0.15f);
+    glVertex3f(0.0f, 0.0f, -0.25f);
+    glVertex3f(-1.10f, 0.0f, -0.05f);
+    glEnd();
+    glPopMatrix();
+
+    glColor3f(0.17f, 0.13f, 0.10f);
+    glBegin(GL_TRIANGLES);
+    glVertex3f(0.10f, 0.0f, -0.55f);
+    glVertex3f(-0.10f, 0.0f, -0.55f);
+    glVertex3f(0.0f, 0.0f, -0.90f);
+    glEnd();
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_TEXTURE_2D);
+    glPopMatrix();
+}
+
+void DrawAllBirds() {                                      
+    for (const auto& b : birds) DrawOneBird(b);
+}
+
+// ===================== MASINA NPC =====================
+struct NPCCar {
+    float angle;      
+    float speed;      
+    float radius;      
+    float x, y, z;    
+    float yaw;         
+    float r, g, b;    
+};
+
+NPCCar npcCar; 
+
+void BuildNPCCar() {                                           
+    npcCar.angle = 1.0f;         
+    npcCar.speed = 0.004f;      
+    npcCar.radius = 55.0f;         
+    npcCar.r = 0.10f; npcCar.g = 0.60f; npcCar.b = 0.25f; 
+}
+
+void UpdateNPCCar(float dt) {                                  
+    npcCar.angle += npcCar.speed;
+    if (npcCar.angle > 2.0f * 3.14159f)
+        npcCar.angle -= 2.0f * 3.14159f;
+    npcCar.x = cosf(npcCar.angle) * npcCar.radius;
+    npcCar.z = sinf(npcCar.angle) * npcCar.radius;
+    npcCar.y = HeightFunc(npcCar.x, npcCar.z) + 0.45f; 
+    float tx = -sinf(npcCar.angle);
+    float tz = cosf(npcCar.angle);
+    npcCar.yaw = atan2f(tx, tz) * 180.0f / 3.14159f;
+}
+
+void DrawNPCCar() {                                            
+    glPushMatrix();
+    glTranslatef(npcCar.x, npcCar.y, npcCar.z);
+    glRotatef(npcCar.yaw, 0, 1, 0);
+    glDisable(GL_TEXTURE_2D);
+    glColor3f(npcCar.r, npcCar.g, npcCar.b);
+    glPushMatrix();
+    glTranslatef(0.0f, 0.6f, 0.0f);
+    glScalef(2.8f, 0.8f, 6.0f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    glColor3f(npcCar.r * 0.85f, npcCar.g * 0.85f, npcCar.b * 0.85f);
+    glPushMatrix();
+    glTranslatef(0.0f, 1.6f, -0.4f);
+    glScalef(2.4f, 1.2f, 3.2f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glPushMatrix();
+    glTranslatef(0.0f, 1.7f, 1.21f);
+    glScalef(2.2f, 0.9f, 0.05f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(1.21f, 1.6f, -0.4f);
+    glScalef(0.05f, 0.9f, 2.8f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(-1.21f, 1.6f, -0.4f);
+    glScalef(0.05f, 0.9f, 2.8f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    GLfloat lightEm[] = { 1.0f, 1.0f, 0.5f, 1.0f };
+    GLfloat noEm[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    glMaterialfv(GL_FRONT, GL_EMISSION, lightEm);
+    glColor3f(1.0f, 1.0f, 0.7f);
+    glPushMatrix(); glTranslatef(1.0f, 0.7f, 3.0f);
+    glutSolidSphere(0.3f, 12, 12); glPopMatrix();
+    glPushMatrix(); glTranslatef(-1.0f, 0.7f, 3.0f);
+    glutSolidSphere(0.3f, 12, 12); glPopMatrix();
+    glMaterialfv(GL_FRONT, GL_EMISSION, noEm);
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glPushMatrix(); glTranslatef(1.0f, 0.7f, -3.0f);
+    glScalef(0.6f, 0.3f, 0.1f); glutSolidCube(1.0f); glPopMatrix();
+    glPushMatrix(); glTranslatef(-1.0f, 0.7f, -3.0f);
+    glScalef(0.6f, 0.3f, 0.1f); glutSolidCube(1.0f); glPopMatrix();
+    GLUquadric* q = gluNewQuadric();
+    float wheelWidth = 0.5f, wheelRadius = 0.45f;
+    float wheelCoords[4][2] = {
+        { 1.4f,  1.8f}, {-1.4f,  1.8f},
+        { 1.4f, -2.0f}, {-1.4f, -2.0f}
+    };
+    for (int i = 0; i < 4; i++) {
+        glPushMatrix();
+        glTranslatef(wheelCoords[i][0], 0.45f, wheelCoords[i][1]);
+        glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+        if (wheelCoords[i][0] < 0) glTranslatef(0, 0, -wheelWidth);
+        else                        glTranslatef(0, 0, -0.1f);
+        glColor3f(0.1f, 0.1f, 0.1f);
+        gluCylinder(q, wheelRadius, wheelRadius, wheelWidth, 16, 1);
+        glColor3f(0.4f, 0.4f, 0.4f);
+        glPushMatrix(); glTranslatef(0, 0, wheelWidth);
+        gluDisk(q, 0, wheelRadius, 16, 1); glPopMatrix();
+        gluDisk(q, 0, wheelRadius, 16, 1);
+        glPopMatrix();
+    }
+    gluDeleteQuadric(q);
+
+    glPopMatrix();
+    glEnable(GL_LIGHTING);
+    glEnable(GL_TEXTURE_2D);
+}
+
 // ===================== CAMERA =====================
 void UpdateCamera() {
     float fx = cosf(deg2rad(yaw)) * cosf(deg2rad(pitch));
@@ -1056,6 +1288,13 @@ void UpdateCamera() {
 // ===================== DISPLAY =====================
 void display() {
     UpdatePlayerCar();
+    static float lastTime = 0.0f;
+    float currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+    float dt = currentTime - lastTime;
+    if (dt > 0.05f) dt = 0.05f;
+    lastTime = currentTime;
+    UpdateBirds(dt); 
+    UpdateNPCCar(dt); 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1109,9 +1348,12 @@ void display() {
     DrawAllLampSelfShadows();
     DrawAllBenchShadows();
     DrawAllBenches();
-    DrawPlayerCar();           
+    DrawPlayerCar();  
+    DrawNPCCar(); 
     DrawAllLampPosts();
     DrawAllLampGlows();
+    DrawAllBirds(); 
+    
     float to = 13, ts = 7;
     for (int z = -220; z <= 220; z += 35) {
         if (abs(z) < 65) continue;
@@ -1173,7 +1415,8 @@ void InitScene() {
     benchLoaded = LoadOBJ("bankblender.obj", benchMesh);
     BuildBenches();
     InitColliders();
-}
+    BuildBirds(); 
+    BuildNPCCar(); }
 
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
